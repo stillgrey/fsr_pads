@@ -2,6 +2,16 @@
 import cgi
 print "Content-type: text/html"
 print
+print '''<html>'''
+
+print '''<head>'''
+print '''<link rel="stylesheet" type="text/css" href="styles/styles.css">'''
+print '''<script src="js/jquery-3.2.1.min.js"></script>'''
+print '''<script src="js/scripts.js"></script>'''
+print '''</head>'''
+
+print '''<body>'''
+print
 f = open("users.txt", "rb")
 cur_file = f.read()
 user_list = cur_file.split("^")
@@ -25,8 +35,10 @@ if (add_user):
     f.close()
     print "Added new user \"" + new_user + "\""
     print "<a href=/pads.py?cur_user="+new_user+">Edit sensitivities</a>"
+    print '''<script>setTimeout(function() { window.location = "pads.py?cur_user=%s" }, 1000) </script>''' % new_user
 else:
     print "Error adding user. (Does this user already exist?)"
     print "<a href=/pads.py>"
-
-
+    print '''<script>setTimeout(function() { window.location = "pads.py" }, 1000) </script>'''
+print '''</body>'''
+print '''</html>'''

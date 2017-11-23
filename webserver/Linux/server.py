@@ -3,7 +3,7 @@
 import BaseHTTPServer
 import CGIHTTPServer
 import cgitb
-cgitb.enable()
+cgitb.enable()  ## This line enables CGI errorreporting
  
 server = BaseHTTPServer.HTTPServer
 handler = CGIHTTPServer.CGIHTTPRequestHandler

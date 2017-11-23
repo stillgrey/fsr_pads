@@ -5,6 +5,16 @@ import serial
 import time
 print "Content-type: text/html"
 print
+print '''<html>'''
+
+print '''<head>'''
+print '''<link rel="stylesheet" type="text/css" href="styles/styles.css">'''
+print '''<script src="js/jquery-3.2.1.min.js"></script>'''
+print '''<script src="js/scripts.js"></script>'''
+print '''</head>'''
+
+print '''<body>'''
+print
 
 form = cgi.FieldStorage()
 cur_user = form.getvalue("cur_user")
@@ -56,4 +66,7 @@ f.write("^".join(user_list))
 f.close
 
 s.close()
+print '''<script>setTimeout(function() { window.location = "pads.py?cur_user=%s" }, 1000) </script>''' % cur_user
 
+print '''</body>'''
+print '''</html>'''
