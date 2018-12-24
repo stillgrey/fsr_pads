@@ -24,7 +24,7 @@ r_pressure = form.getvalue("right_pressure")
 d_pressure = form.getvalue("down_pressure")
 s = serial.Serial("/dev/ttyACM0", 9600)
 s.setDTR(1)
-f = open("users.txt", "rb")
+f = open("users.txt", "r")
 users_file = f.read()
 f.close()
 user_list = users_file.split("^")
@@ -61,7 +61,7 @@ print(new_pressures.replace(",", "|"))
 print("<br><a href=pads.py?cur_user=%s>Return</a>" % cur_user)
 
 user_list[cur_user_list_index] = ":".join(cur_user_list)
-f = open("users.txt", "wb")
+f = open("users.txt", "w")
 f.write("^".join(user_list))
 f.close
 

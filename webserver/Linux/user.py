@@ -14,7 +14,7 @@ print("""Content-type: text/html
 
 """)
 
-f = open("users.txt", "rb")
+f = open("users.txt", "r")
 cur_file = f.read()
 user_list = cur_file.split("^")
 f.close()
@@ -32,7 +32,7 @@ if (len(new_user) < 1):
     add_user = False
 
 if (add_user):
-    f = open("users.txt", "wb")
+    f = open("users.txt", "w")
     f.write(cur_file.strip('\n')+"^"+new_user+":200:200:200:200")
     f.close()
     print("Added new user \"" + new_user + "\"")

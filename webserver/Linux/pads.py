@@ -24,7 +24,7 @@ print("""Content-type: text/html
 
 						<select name="cur_user">""")
 
-f = open("users.txt", "rb")
+f = open("users.txt", "r")
 user_list = f.read().split("^")
 f.close()
 
@@ -66,6 +66,6 @@ cur_pressures = s.read(78).split(',')
 s.close()
 
 
-f = open("indexbottom.html", "rb")
+f = open("indexbottom.html", "r")
 f.read() % (cur_user, int(cur_pressures[3]), int(cur_pressures[1]), int(cur_pressures[5]), int(cur_pressures[7]))
 f.close()
