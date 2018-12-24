@@ -52,16 +52,16 @@ if (cur_user != "Guest" and cur_user != ""):
     for u in user_list:
         u_array = u.split(":")
         if u_array[0] == cur_user:
-            s.write("0"+u_array[1]+"\r\n")
+            s.write("0"+u_array[1]+"\r\n".encode())
             s.read(78)
-            s.write("1"+u_array[2]+"\r\n")
+            s.write("1"+u_array[2]+"\r\n".encode())
             s.read(78)
-            s.write("2"+u_array[3]+"\r\n")
+            s.write("2"+u_array[3]+"\r\n".encode())
             s.read(78)
-            s.write("3"+u_array[4]+"\r\n")
+            s.write("3"+u_array[4]+"\r\n".encode())
             s.read(78)
             break
-s.write("7\r\n")
+s.write("7\r\n".encode())
 cur_pressures = s.read(78).split(',')
 s.close()
 
