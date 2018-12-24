@@ -1,20 +1,20 @@
-#!/usr/bin/env python
-
+#!/usr/bin/env python3
 import cgi
 import serial
 import time
-print "Content-type: text/html"
-print
-print '''<html>'''
+print("""Content-type: text/html
 
-print '''<head>'''
-print '''<link rel="stylesheet" type="text/css" href="styles/styles.css">'''
-print '''<script src="js/jquery-3.2.1.min.js"></script>'''
-print '''<script src="js/scripts.js"></script>'''
-print '''</head>'''
+<html>
 
-print '''<body>'''
-print
+<head>
+<link rel="stylesheet" type="text/css" href="styles/styles.css">
+<script src="js/jquery-3.2.1.min.js"></script>
+<script src="js/scripts.js"></script>
+</head>
+
+<body>
+
+""")
 
 form = cgi.FieldStorage()
 cur_user = form.getvalue("cur_user")
@@ -57,8 +57,8 @@ if (len(d_pressure) == 3):
 if (len(l_pressure) != 3 and len(u_pressure)  != 3 and len(r_pressure)  != 3 and len(d_pressure)  != 3):
     s.write("7\r\n")
     new_pressures = s.read(78)
-print new_pressures.replace(",", "|")
-print '''<br><a href=pads.py?cur_user=%s>Return</a>''' % cur_user
+print(new_pressures.replace(",", "|"))
+print("<br><a href=pads.py?cur_user=%s>Return</a>" % cur_user)
 
 user_list[cur_user_list_index] = ":".join(cur_user_list)
 f = open("users.txt", "wb")
@@ -66,7 +66,7 @@ f.write("^".join(user_list))
 f.close
 
 s.close()
-print '''<script>setTimeout(function() { window.location = "pads.py?cur_user=%s" }, 1000) </script>''' % cur_user
+print("<script>setTimeout(function() { window.location = "pads.py?cur_user=%s" }, 1000) </script>" % cur_user)
 
-print '''</body>'''
-print '''</html>'''
+print("</body>")
+print("</html>")
