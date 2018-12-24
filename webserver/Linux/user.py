@@ -37,7 +37,7 @@ if (add_user):
     f.close()
     print("Added new user \"" + new_user + "\"")
     print("<a href=/pads.py?cur_user="+new_user+">Edit sensitivities</a>")
-    print(<script>setTimeout(function() { window.location = "pads.py?cur_user=%s" }, 1000) </script>" % new_user)
+    print("<script>setTimeout(function() { window.location = "pads.py?cur_user=%s" }, 1000) </script>" % new_user)
 else:
     print("Error adding user. (Does this user already exist?)")
     print("<a href=/pads.py>")
