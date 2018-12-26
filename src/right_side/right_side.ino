@@ -96,17 +96,17 @@ void processIncomingByte (const byte inByte)
 
   switch (inByte)
   {
-    case '\n':   // Newline signifies the end of the text
-      input_line [input_pos] = 0;  // Add null terminator at the end.
+    case '\n': // Newline signifies the end of the text
+      input_line [input_pos] = 0; // Add null terminator at the end.
       process_data (input_line);
       
       input_pos = 0; // Reset the input_pos so that the buffer is in the beginning and ready to be written. 
       break;
 
-    case '\r':   // Discard carriage return. Linux and Windows have different line endings but they both end in '\n' so 
+    case '\r': // Discard carriage return. Linux and Windows have different line endings but they both end in '\n' so 
       break;
 
-    default:
+    default: // Add each byte to each index of the array until the buffer runs out.
       if (input_pos < (MAX_INPUT - 1))
         input_line [input_pos++] = inByte;
       break;
