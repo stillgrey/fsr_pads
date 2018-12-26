@@ -22,12 +22,18 @@ void setup(void) {
   Keyboard.begin();
 }
 
-// process data after null terminator is received
+// Adjust sensitivity according to the serial command sent from the web app.
+
 void process_data (char * data)
   {
 
-  //do some string parsing  
+  //TODO: Remove this line. This line is unnecessary since the data comes with null terminator
+  //      before this function gets called. 
   data[4]=0;
+
+  // Check to see if the first byte is either 0,1,2,3.
+  // If so, it's a pad sensitivity adjustment command.
+  
   if (data[0]-48 < 5)
   {
    LURD_pressures[data[0]-48] = atoi((const char *)&(data[1]));
