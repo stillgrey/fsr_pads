@@ -21,68 +21,37 @@ void setup(void)
   Keyboard.begin();
 }
 
+//Formats the pad sensitivity output to have 3 digits consistently.
+String format_pad_sensitivity (int input)
+{
+  String retval = "";
+  
+  if (input < 100) retval += "0"; 
+  if (input < 10) retval += "0";
+  retval += String(input);
+  
+  return retval;
+}
+
 // Adjust sensitivity according to the serial command sent from the web app.
 void process_data (char * data)
 {
-
   //TODO: Remove this line. This line is unnecessary since the data comes with null terminator
   //      before this function gets called. 
   data[4] = 0;
 
   // Check to see if the first byte is either 0,1,2,3.
   // If so, it's a pad sensitivity adjustment command.
-  if (data[0] - 48 < 5)
+  if (data[0] - 48 < 5) LURD_pressures[data[0] - 48] = atoi((const char *) &(data[1]));
+
+  // Output the current pad sensitivities.
+  String headers[4] = {"L pressure: ,", "U pressure: ,", "R pressure: ,","D pressure: ,"};
+  for (int i = 0; i < 4; i++)
   {
-   LURD_pressures[data[0] - 48] = atoi((const char *) &(data[1]));
-  }
-  
-  Serial.print("L pressure: ,");
-  if (LURD_pressures[0] < 100)
-  {
-      Serial.print("0");
-  }
-  if (LURD_pressures[0] < 10)
-  {
-      Serial.print("0");
-  }
-  Serial.print(LURD_pressures[0]);
-  Serial.println(",");
-  
-  Serial.print("U pressure: ,");
-  if (LURD_pressures[1] < 100)
-  {
-      Serial.print("0");
-  }
-  if (LURD_pressures[1] < 10)
-  {
-      Serial.print("0");
-  }
-  Serial.print(LURD_pressures[1]);
-  Serial.println(",");
-  
-  Serial.print("R pressure: ,");
-  if (LURD_pressures[2] < 100)
-  {
-      Serial.print("0");
-  }
-  if (LURD_pressures[2] < 10)
-  {
-      Serial.print("0");
-  }
-  Serial.print(LURD_pressures[2]);
-  Serial.println(",");
-  
-  Serial.print("D pressure: ,");
-  if (LURD_pressures[3] < 100)
-  {
-      Serial.print("0");
-  }
-  if (LURD_pressures[3] < 10)
-  {
-      Serial.print("0");
-  }
-  Serial.print(LURD_pressures[3]);
-  Serial.println(",");
+    Serial.print(headers[i]);
+    Serial.print(format_pad_sensitivity(LURD_pressures[i]));
+    Serial.println(",");  
+  }  
   Serial.println("");
 }
 
@@ -103,28 +72,25 @@ void processIncomingByte (const byte inByte)
       input_pos = 0; // Reset the input_pos so that the buffer is in the beginning and ready to be written. 
       break;
 
-    case '\r': // Discard carriage return. Linux and Windows have different line endings but they both end in '\n' so 
+    case '\r': // Discard carriage return. Linux and Windows have different line endings but they both end in '\n.'
+               // So, keep it consistent and disregard carriage return.
       break;
 
     default: // Add each byte to each index of the array until the buffer runs out.
-      if (input_pos < (MAX_INPUT - 1))
-        input_line [input_pos++] = inByte;
+      if (input_pos < (MAX_INPUT - 1)) input_line[input_pos++] = inByte;
       break;
   }    
 } 
 
 int counter = 0;
-void loop(void) {
- 
+void loop(void)
+{ 
  counter = (counter + 1) % 10; // Adjust the command polling rate here.
  
  // If there are commands that needs to processed, process them.
  if (counter == 0)
  {
-   if (Serial.available() > 0)
-   {
-     processIncomingByte(Serial.read());
-   }
+   if (Serial.available() > 0) processIncomingByte(Serial.read());
  }
 
  // Send keyboard input depending on whether the panel is held down or not.
@@ -134,18 +100,18 @@ void loop(void) {
      {
       if (LURD_State[i] == 0)
       {
-        Keyboard.press(LURD_Keys[i]);
+        //Keyboard.press(LURD_Keys[i]);
         LURD_State[i] = 1;
       }
      }
      
      else
      {
-      if (LURD_State[i] == 1)
-      {
-        Keyboard.release(LURD_Keys[i]);
-        LURD_State[i] = 0;
-      }
+       if (LURD_State[i] == 1)
+       {
+         //Keyboard.release(LURD_Keys[i]);
+         LURD_State[i] = 0;
+       }
      }
  }
   /*
