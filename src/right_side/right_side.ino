@@ -18,7 +18,7 @@ const unsigned int MAX_INPUT = 50;
 void setup(void)
 {
   Serial.begin(9600);
-  Keyboard.begin();
+  //Keyboard.begin();
 }
 
 //Formats the pad sensitivity output to have 3 digits consistently.
@@ -65,6 +65,24 @@ void processIncomingByte (const byte inByte)
 
   switch (inByte)
   {
+    case 'E':
+      // The python server will send 'E' constantly and wait for the Arduino
+      // to send a response.
+
+      // If Arduino receives the 'E' then it will return an 'E' to signify
+      // that their handshake was successful and they are ready to communicate.
+      // ______________________________________________________________________
+      // Send whatever we have right now along side a garbage information.
+      //
+      // This is needed since flush doesn't flush in Arduino,
+      // but waits for the serial transmission to complete.
+        Serial.print("disregard this transmission please. thanks.");
+        Serial.flush();
+
+      // Send handshake
+        Serial.write("E");
+        break;
+
     case '\n': // Newline signifies the end of the text
       input_line [input_pos] = 0; // Add null terminator at the end.
       process_data (input_line);
@@ -83,6 +101,7 @@ void processIncomingByte (const byte inByte)
 }
 
 int counter = 0;
+
 void loop(void)
 {
  counter = (counter + 1) % 10; // Adjust the command polling rate here.
@@ -90,7 +109,11 @@ void loop(void)
  // If there are commands that needs to processed, process them.
  if (counter == 0)
  {
-   if (Serial.available() > 0) processIncomingByte(Serial.read());
+   if (Serial.available() > 0)
+   {
+    int x = Serial.read();
+    processIncomingByte(x);
+   }
  }
 
  // Send keyboard input depending on whether the panel is held down or not.
@@ -100,7 +123,7 @@ void loop(void)
      {
       if (LURD_State[i] == 0)
       {
-        Keyboard.press(LURD_Keys[i]);
+        //Keyboard.press(LURD_Keys[i]);
         LURD_State[i] = 1;
       }
      }
@@ -109,7 +132,7 @@ void loop(void)
      {
        if (LURD_State[i] == 1)
        {
-         Keyboard.release(LURD_Keys[i]);
+         //Keyboard.release(LURD_Keys[i]);
          LURD_State[i] = 0;
        }
      }
