@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import serial
 import cgi
+import time
 print("""Content-type: text/html
 
 <html>
@@ -46,8 +47,21 @@ print("""</select>
 
 form = cgi.FieldStorage()
 cur_user = form.getvalue("cur_user")
-s = serial.Serial("/dev/ttyACM0", 9600)
+s = serial.Serial("COM7", 9600, timeout=4)
 s.setDTR(1)
+
+while(True):
+    # if there are more bytes waiting, read the last byte
+    # if that's a valid handshake byte, then clear input buffer.
+    if (s.in_waiting > 0):
+        n_bytes = s.in_waiting
+        data = s.read(n_bytes)
+        if (data[n_bytes-1] == 69):
+            s.reset_input_buffer()
+            break
+    s.write(b'E')
+    time.sleep(0.1)  # give a delay to make sure that arduino is ready
+
 if (cur_user != "Guest" and cur_user != ""):
     for u in user_list:
         u_array = u.split(":")
@@ -61,11 +75,12 @@ if (cur_user != "Guest" and cur_user != ""):
             s.write("3"+u_array[4]+"\r\n".encode())
             s.read(78)
             break
+
 s.write("7\r\n".encode())
-cur_pressures = s.read(78).split(',')
+cur_pressures = s.read(78).decode().split(",")
 s.close()
 
-
 f = open("indexbottom.html", "r")
-f.read() % (cur_user, int(cur_pressures[3]), int(cur_pressures[1]), int(cur_pressures[5]), int(cur_pressures[7]))
+bottom_text = f.read() % (cur_user, int(cur_pressures[3]), int(cur_pressures[1]), int(cur_pressures[5]), int(cur_pressures[7]))
+print(bottom_text)
 f.close()
