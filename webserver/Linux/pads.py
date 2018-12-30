@@ -71,7 +71,6 @@ if (cur_user != "Guest" and cur_user != ""):
     for u in user_list:
         u_array = u.split(":")
         if u_array[0] == cur_user:
-            print(cur_user, u_array[0])
             s.write(("0" + u_array[1] + "\r\n").encode())
             s.write(("1" + u_array[2] + "\r\n").encode())
             s.write(("2" + u_array[3] + "\r\n").encode())
@@ -81,7 +80,6 @@ if (cur_user != "Guest" and cur_user != ""):
 
 s.write("7\r\n".encode())
 cur_pressures = s.read(78).decode().split(",")
-print(cur_pressures)
 s.close()
 
 f = open("indexbottom.html", "r")
