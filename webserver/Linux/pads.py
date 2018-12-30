@@ -47,8 +47,13 @@ print("""</select>
 
 form = cgi.FieldStorage()
 cur_user = form.getvalue("cur_user")
-s = serial.Serial("COM7", 9600, timeout=4)
-s.setDTR(1)
+
+# Opening serial this way because we don't want to reset the board.
+s = serial.Serial()
+s.port = "COM7"
+s.baudrate = 9600
+s.setDTR(False)
+s.open()
 
 while(True):
     # if there are more bytes waiting, read the last byte
@@ -66,18 +71,17 @@ if (cur_user != "Guest" and cur_user != ""):
     for u in user_list:
         u_array = u.split(":")
         if u_array[0] == cur_user:
-            s.write("0"+u_array[1]+"\r\n".encode())
-            s.read(78)
-            s.write("1"+u_array[2]+"\r\n".encode())
-            s.read(78)
-            s.write("2"+u_array[3]+"\r\n".encode())
-            s.read(78)
-            s.write("3"+u_array[4]+"\r\n".encode())
-            s.read(78)
+            print(cur_user, u_array[0])
+            s.write(("0" + u_array[1] + "\r\n").encode())
+            s.write(("1" + u_array[2] + "\r\n").encode())
+            s.write(("2" + u_array[3] + "\r\n").encode())
+            s.write(("3" + u_array[4] + "\r\n").encode())
+            s.reset_input_buffer() # Get rid of pressure datas that gets returned
             break
 
 s.write("7\r\n".encode())
 cur_pressures = s.read(78).decode().split(",")
+print(cur_pressures)
 s.close()
 
 f = open("indexbottom.html", "r")

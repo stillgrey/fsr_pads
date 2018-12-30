@@ -18,45 +18,66 @@ print("""Content-type: text/html
 
 form = cgi.FieldStorage()
 cur_user = form.getvalue("cur_user")
-l_pressure = form.getvalue("left_pressure")
-u_pressure = form.getvalue("up_pressure")
-r_pressure = form.getvalue("right_pressure")
-d_pressure = form.getvalue("down_pressure")
-s = serial.Serial("/dev/ttyACM0", 9600)
-s.setDTR(1)
+
+headers = ["left_pressure", "up_pressure", "right_pressure", "down_pressure"]
+pressures = [0, 0, 0, 0]
+
+# Read all the threshold values.
+for i in range(0, 4):
+    pressures[i] = form.getvalue(headers[i])
+
+# Opening serial this way because we don't want to reset the board.
+s = serial.Serial()
+s.port = "COM7"
+s.baudrate = 9600
+s.setDTR(False)
+s.open()
+
+# Do the handshake.
+while(True):
+    # if there are more bytes waiting, read the last byte
+    # if that's a valid handshake byte, then clear input buffer.
+    if (s.in_waiting > 0):
+        n_bytes = s.in_waiting
+        data = s.read(n_bytes)
+        if (data[n_bytes-1] == 69):
+            s.reset_input_buffer()
+            break
+    s.write(b'E')
+    time.sleep(0.1)  # give a delay to make sure that the Arduino is ready
+
+# Read the threshold setting file.
 f = open("users.txt", "r")
 users_file = f.read()
 f.close()
+
+# Build the array of user threshold by splitting "^"
 user_list = users_file.split("^")
+
+# Find if we are working with existing user.
 cur_user_list_index = -1
 for u in range(len(user_list)):
     if user_list[u].split(":")[0] == cur_user:
         cur_user_list_index = u
         break
+
 cur_user_list = user_list[cur_user_list_index].strip("\n").split(":")
-if (len(l_pressure) == 3):
-    if cur_user_list_index != -1:
-        cur_user_list[1]=l_pressure
-    s.write("0"+l_pressure+"\r\n".encode())
-    new_pressures = s.read(78)
-if (len(u_pressure) == 3):
-    if cur_user_list_index != -1:
-        cur_user_list[2]=u_pressure
-    s.write("1"+u_pressure+"\r\n".encode())
-    new_pressures = s.read(78)
-if (len(r_pressure) == 3):
-    if cur_user_list_index != -1:
-        cur_user_list[3]=r_pressure
-    s.write("2"+r_pressure+"\r\n".encode())
-    new_pressures = s.read(78)
-if (len(d_pressure) == 3):
-    if cur_user_list_index != -1:
-        cur_user_list[4]=d_pressure
-    s.write("3"+d_pressure+"\r\n".encode())
-    new_pressures = s.read(78)
-if (len(l_pressure) != 3 and len(u_pressure)  != 3 and len(r_pressure)  != 3 and len(d_pressure)  != 3):
+
+valid_pressure_format_flag = True
+for i in range(0, 4):
+    if (len(pressures[i]) == 3):
+        if cur_user_list_index != -1:
+            cur_user_list[i+1] = pressures[i]
+        s.write((str(i)+str(pressures[i])+"\r\n").encode())
+        new_pressures = s.read(78).decode()
+    else:
+        valid_pressure_format_flag = False
+
+# if they aren't valid pressures, read whatever is in the Arduino.
+if (valid_pressure_format_flag is False):
     s.write("7\r\n".encode())
-    new_pressures = s.read(78)
+    new_pressures = s.read(78).decode()
+
 print(new_pressures.replace(",", "|"))
 print("<br><a href=pads.py?cur_user=%s>Return</a>" % cur_user)
 
@@ -66,7 +87,7 @@ f.write("^".join(user_list))
 f.close
 
 s.close()
-print("<script>setTimeout(function() { window.location = "pads.py?cur_user=%s" }, 1000) </script>" % cur_user)
+print('<script>setTimeout(function() { window.location = "pads.py?cur_user=%s" }, 1000) </script>' % cur_user)
 
 print("</body>")
 print("</html>")
