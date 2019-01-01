@@ -23,7 +23,14 @@ double buf[4][10] =  {{0,0,0,0,0,0,0,0,0,0},
                     {0,0,0,0,0,0,0,0,0,0},
                     {0,0,0,0,0,0,0,0,0,0}};
 
-int buf_pos = 0;
+int buf_pos = SZ;
+
+// Calculates non-negative modulo values.
+int mod(int a, int b)
+{
+    int r = a % b;
+    return r < 0 ? r + b : r;
+}
 
 void setup(void)
 {
@@ -134,7 +141,7 @@ void loop(void)
     double temp = 0; 
     for (int j = 0; j < SZ; j++) 
     {
-      temp += FIR_coeff[j] * buf[i][(buf_pos + j) % SZ];
+      temp += FIR_coeff[j] * buf[i][mod((buf_pos - j), SZ)];
     } 
     buf[i][buf_pos] = temp; 
     
@@ -167,7 +174,7 @@ void loop(void)
  Serial.print(", ");
  Serial.println(buf[3][buf_pos]);
  */
- buf_pos = (buf_pos + 1) % SZ;
+ buf_pos = mod((buf_pos + 1),  SZ);
  
   
   /*
