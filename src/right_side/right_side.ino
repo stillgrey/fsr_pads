@@ -6,7 +6,7 @@
 #define DOWN_PRESSURE  437
 #define RIGHT_PRESSURE 380
 #define UP_PRESSURE    345
-#define SZ             3
+#define SZ             7
 
 #include <Keyboard.h>
 
@@ -16,7 +16,7 @@ int LURD_pressures[4] = {LEFT_PRESSURE, UP_PRESSURE, RIGHT_PRESSURE, DOWN_PRESSU
 char LURD_Keys[5] = "awds";
 const unsigned int MAX_INPUT = 50;
 
-double FIR_coeff[SZ] = {0.333, 0.333, 0.333};
+double FIR_coeff[SZ] = {-0.008, 0.0928, 0.263, 0.3544, 0.263, 0.0928, -0.008};
 
 double buf[4][10] =  {{0,0,0,0,0,0,0,0,0,0},
                     {0,0,0,0,0,0,0,0,0,0},
