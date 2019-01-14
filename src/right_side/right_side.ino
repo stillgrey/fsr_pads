@@ -2,11 +2,16 @@
 
 #define BASE_PRESSURE  0
 
-#define LEFT_PRESSURE  375
-#define DOWN_PRESSURE  437
-#define RIGHT_PRESSURE 380
-#define UP_PRESSURE    345
-#define SZ             7
+#define LEFT_PRESSURE  420
+#define DOWN_PRESSURE  560
+#define RIGHT_PRESSURE 350
+#define UP_PRESSURE    650
+
+#define LOWER_LIMIT_PRESSURE 400
+
+//Times in ms
+#define DELAY_TIME 0.25
+#define DEBOUNCE_TIME 10
 
 #include <Keyboard.h>
 
@@ -16,21 +21,8 @@ int LURD_pressures[4] = {LEFT_PRESSURE, UP_PRESSURE, RIGHT_PRESSURE, DOWN_PRESSU
 char LURD_Keys[5] = "awds";
 const unsigned int MAX_INPUT = 50;
 
-double FIR_coeff[SZ] = {-0.008, 0.0928, 0.263, 0.3544, 0.263, 0.0928, -0.008};
-
-double buf[4][10] =  {{0,0,0,0,0,0,0,0,0,0},
-                    {0,0,0,0,0,0,0,0,0,0},
-                    {0,0,0,0,0,0,0,0,0,0},
-                    {0,0,0,0,0,0,0,0,0,0}};
-
-int buf_pos = SZ;
-
-// Calculates non-negative modulo values.
-int mod(int a, int b)
-{
-    int r = a % b;
-    return r < 0 ? r + b : r;
-}
+long long last_keypress_time = 0;
+long long last_state_change_time[4] = {0, 0, 0, 0};
 
 void setup(void)
 {
@@ -38,38 +30,31 @@ void setup(void)
   Keyboard.begin();
 }
 
-//Formats the pad sensitivity output to have 3 digits consistently.
-String format_pad_sensitivity (int input)
-{
-  String retval = "";
-
-  if (input < 100) retval += "0";
-  if (input < 10) retval += "0";
-  retval += String(input);
-
-  return retval;
-}
-  
 // Adjust sensitivity according to the serial command sent from the web app.
-void process_data (char * data)
+void process_data (char* data)
 {
-  //TODO: Remove this line. This line is unnecessary since the data comes with null terminator
-  //      before this function gets called.
+  //  TODO: Remove this line. This line is unnecessary since the data comes
+  //        with null terminator before this function gets called.
   data[4] = 0;
 
   // Check to see if the first byte is either 0,1,2,3.
   // If so, it's a pad sensitivity adjustment command.
-  if (data[0] - 48 < 5) 
+  if (data[0] - 48 < 5)
   {
     LURD_pressures[data[0] - 48] = atoi((const char *) &(data[1]));
   }
 
   // Output the current pad sensitivities.
-  String headers[4] = {"L pressure: ,", "U pressure: ,", "R pressure: ,","D pressure: ,"};
+  char* headers[4] = {"L pressure: ,", "U pressure: ,",
+                      "R pressure: ,","D pressure: ,"};
+  char pressure_string_buf[4] = {0,0,0,0};
+
   for (int i = 0; i < 4; i++)
   {
-    Serial.print(headers[i]);
-    Serial.print(format_pad_sensitivity(LURD_pressures[i]));
+    sprintf(&pressure_string_buf, "%3d", LURD_pressures[i]);
+
+    Serial.print(&headers[i]);
+    Serial.print(&pressure_string_buf);
     Serial.println(",");
   }
   Serial.println("");
@@ -85,22 +70,6 @@ void processIncomingByte (const byte inByte)
 
   switch (inByte)
   {
-    case 'E': 
-      // The python server will send 'E' constantly and wait for the Arduino
-      // to send a response.
-
-      // If Arduino receives the 'E' then it will return an 'E' to signify
-      // that their handshake was successful and they are ready to communicate.
-      // ______________________________________________________________________
-      // Send whatever we have right now along side a garbage information.
-
-        Serial.print("disregard this buffer please. thanks.");
-        Serial.flush();
-        
-      // Send handshake
-        Serial.write("E");
-        break;
-        
     case '\n': // Newline signifies the end of the text
       input_line [input_pos] = 0; // Add null terminator at the end.
       process_data (input_line);
@@ -122,77 +91,59 @@ int counter = 0;
 
 void loop(void)
 {
- counter = (counter + 1) % 10; // Adjust the command polling rate here.
+  counter = (counter + 1) % 10; // Adjust the command polling rate here.
 
- // If there are commands that needs to processed, process them.
- if (counter == 0)
- {
-   if (Serial.available() > 0) 
+  // If there are commands that needs to processed, process them.
+  if (counter == 0)
+  {
+    if (Serial.available() > 0)
+    {
+      int x = Serial.read();
+      processIncomingByte(x);
+    }
+  }
+
+  long long current_time = micros();
+
+  // Read keyboard input depending on whether the panel is held down or not.
+  for (int i = 0; i < 4; i++)
+  {
+    int sensor_value = analogRead(LURD_pins[i]);
+
+    // Not making it a float is intentional here.
+    int state_change_time_diff_in_ms = (current_time - last_state_change_time[i]) / 1000;
+
+    if (sensor_value > (LURD_pressures[i] + BASE_PRESSURE))
+    {
+      if ((LURD_State[i] == 0) &&
+          (state_change_time_diff_in_ms > DEBOUNCE_TIME))
+      {
+        LURD_State[i] = 1;
+        last_state_change_time[i] = current_time;
+      }
+    }
+
+   else if ((sensor_value < LOWER_LIMIT_PRESSURE) &&
+            (state_change_time_diff_in_ms > DEBOUNCE_TIME))
    {
-    int x = Serial.read();
-    processIncomingByte(x);
+     if (LURD_State[i] == 1)
+     {
+       LURD_State[i] = 0;
+       last_state_change_time[i] = current_time;
+     }
    }
  }
 
- // Send keyboard input depending on whether the panel is held down or not.
- for (int i = 0; i < 4; i++)
- {
-    buf[i][buf_pos] = analogRead(LURD_pins[i]);
-    double temp = 0; 
-    for (int j = 0; j < SZ; j++) 
+  current_time = micros();
+
+  if ((current_time - last_keypress_time) > (DELAY_TIME * 1000))
+  {
+    for (int i = 0; i < 4; i++)
     {
-      temp += FIR_coeff[j] * buf[i][mod((buf_pos - j), SZ)];
-    } 
-    buf[i][buf_pos] = temp; 
-    
-    if (buf[i][buf_pos] > (LURD_pressures[i] + BASE_PRESSURE))
-    {
-      if (LURD_State[i] == 0)
-      {
-        Keyboard.press(LURD_Keys[i]);
-        LURD_State[i] = 1;
-      }
-     }
+      if (LURD_State[i] == 1) Keyboard.press(LURD_Keys[i]);
+      else Keyboard.release(LURD_Keys[i]);
+    }
 
-     else
-     {
-       if (LURD_State[i] == 1)
-       {
-         Keyboard.release(LURD_Keys[i]);
-         LURD_State[i] = 0;
-       }
-     }
- }
-
- /* FIR print statements
-  
- Serial.print(buf[0][buf_pos]);
- Serial.print(", ");
- Serial.print(buf[1][buf_pos]);
- Serial.print(", ");
- Serial.print(buf[2][buf_pos]);
- Serial.print(", ");
- Serial.println(buf[3][buf_pos]);
- */
- buf_pos = mod((buf_pos + 1),  SZ);
- 
-  
-  /*
-   * Debugging:
-  fsrReading = analogRead(0);
-  Serial.print("Analog reading (L)= ");
-  Serial.println(fsrReading);
-
-  fsrReading = analogRead(1);
-  Serial.print("Analog reading (U)= ");
-  Serial.println(fsrReading);
-
-  fsrReading = analogRead(2);
-  Serial.print("Analog reading (R)= ");
-  Serial.println(fsrReading);
-
-  fsrReading = analogRead(3);
-  Serial.print("Analog reading (D)= ");
-  Serial.println(fsrReading);
- */
+    last_keypress_time = current_time;
+  }
 }
