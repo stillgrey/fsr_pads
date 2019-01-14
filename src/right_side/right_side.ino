@@ -47,14 +47,14 @@ void process_data (char* data)
   // Output the current pad sensitivities.
   char* headers[4] = {"L pressure: ,", "U pressure: ,",
                       "R pressure: ,","D pressure: ,"};
-  char pressure_string_buf[4] = {0,0,0,0};
+  char pressure_string_buf[4];
 
   for (int i = 0; i < 4; i++)
   {
-    sprintf(&pressure_string_buf, "%3d", LURD_pressures[i]);
+    sprintf(pressure_string_buf, "%03d", LURD_pressures[i]);
 
-    Serial.print(&headers[i]);
-    Serial.print(&pressure_string_buf);
+    Serial.print(headers[i]);
+    Serial.print(&(pressure_string_buf[0]));
     Serial.println(",");
   }
   Serial.println("");
