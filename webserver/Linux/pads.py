@@ -55,26 +55,11 @@ s.baudrate = 9600
 s.setDTR(False)
 s.open()
 
-while(True):
-    # if there are more bytes waiting, read the last byte
-    # if that's a valid handshake byte, then clear input buffer.
-    if (s.in_waiting > 0):
-        n_bytes = s.in_waiting
-        data = s.read(n_bytes)
-        if (data[n_bytes-1] == 69):
-            s.reset_input_buffer()
-            break
-    s.write(b'E')
-    time.sleep(0.1)  # give a delay to make sure that arduino is ready
-
 if (cur_user != ""):
     for u in user_list:
         u_array = u.split(":")
 
         if u_array[0] == cur_user:
-            # print("the settings on users.txt: ", u_array)
-
-            # TODO: understand why 78 byte reading is necessary.
             s.write(("0" + u_array[1] + "\r\n").encode())
             s.read(78)
             s.write(("1" + u_array[2] + "\r\n").encode())
@@ -88,7 +73,6 @@ if (cur_user != ""):
 s.write("7\r\n".encode())
 time.sleep(0.1)
 cur_pressures = s.read(78).decode().split(",")
-#print("on the board: ", cur_pressures)
 s.close()
 
 f = open("indexbottom.html", "r")

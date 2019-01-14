@@ -33,19 +33,6 @@ s.baudrate = 9600
 s.setDTR(False)
 s.open()
 
-# Do the handshake.
-while(True):
-    # if there are more bytes waiting, read the last byte
-    # if that's a valid handshake byte, then clear input buffer.
-    if (s.in_waiting > 0):
-        n_bytes = s.in_waiting
-        data = s.read(n_bytes)
-        if (data[n_bytes-1] == 69):
-            s.reset_input_buffer()
-            break
-    s.write(b'E')
-    time.sleep(0.1)  # give a delay to make sure that the Arduino is ready
-
 # Read the threshold setting file.
 f = open("users.txt", "r")
 users_file = f.read()
